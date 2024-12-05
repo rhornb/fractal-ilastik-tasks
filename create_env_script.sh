@@ -14,7 +14,7 @@ else
     LOCATION="--prefix $ENVPREFIX/$ENVNAME"
 fi
 
-echo "Creating environment $ENVNAME with $PYTORCH_PACKAGE"
+echo "Creating environment $ENVNAME"
 $COMMMAND run $COMMMAND create $LOCATION \
                                --override-channels \
                                -c pytorch \
@@ -22,7 +22,7 @@ $COMMMAND run $COMMMAND create $LOCATION \
                                -c conda-forge $PYTHON ilastik \
                                --no-channel-priority --yes
 
-echo "Installing plantseg-tasks version $VERSION"
+echo "Installing ilastik-tasks version $VERSION"
 $COMMMAND run --name $ENVNAME pip install git+https://github.com/fractal-analytics-platform/fractal-ilastik-tasks@$VERSION
 
 echo "Downloading the __FRACTAL_MANIFEST__.json file file"
