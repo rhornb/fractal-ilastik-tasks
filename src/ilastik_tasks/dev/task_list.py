@@ -7,5 +7,9 @@ TASK_LIST = [
         name="Ilastik Pixel Classification Segmentation",
         executable="ilastik_pixel_classification_segmentation.py",
         meta={"cpus_per_task": 8, "mem": 8000},
+        category="Segmentation",
+        tags=[
+            "Pixel Classifier",
+        ],
     ),
 ]
