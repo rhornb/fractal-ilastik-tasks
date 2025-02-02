@@ -9,30 +9,21 @@ from ilastik_tasks.ilastik_pixel_classification_segmentation import (
     ilastik_pixel_classification_segmentation,
 )
 
-
-@pytest.fixture(scope="function")
-def test_data_dir(tmp_path: Path) -> str:
+def test_ilastik_pixel_classification_segmentation_task_2D_single_channel(tmp_zenodo_zarr: list[str]):
     """
-    Copy a test-data folder into a temporary folder.
-    """
-    source_dir = (Path(__file__).parent / "data/ngff_example/my_image").as_posix()
-    dest_dir = (tmp_path / "my_image").as_posix()
-    debug(source_dir, dest_dir)
-    shutil.copytree(source_dir, dest_dir)
-    return dest_dir
-
-
-def test_ilastik_pixel_classification_segmentation_task(test_data_dir):
-    """
-    Test the ilastik_pixel_classification_segmentation task.
+    Test the 2D (e.g. MIP) ilastik_pixel_classification_segmentation task with single channel input.
     """
     ilastik_model = (Path(__file__).parent / "data/pixel_classifier_2D.ilp").as_posix()
-    test_data_dir = Path(test_data_dir).as_posix()
-
+    zarr_url = f"{tmp_zenodo_zarr[1]}/B/03/0"
+    
     ilastik_pixel_classification_segmentation(
-        zarr_url=test_data_dir,
+        zarr_url=zarr_url,
         level=0,
         channel=ChannelInputModel(label="DAPI"),
+        channel2=None,
         ilastik_model=str(ilastik_model),
         output_label_name="test_label",
     )
+
+# TODO: add (2D) dual channel ilastik model for testing
+# TODO: add (3D) test data for dual channel testing - code works but could not yet find suitable test data
