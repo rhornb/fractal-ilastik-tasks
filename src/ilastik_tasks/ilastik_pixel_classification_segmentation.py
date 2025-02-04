@@ -22,7 +22,7 @@ Ilastik adaptation by:
 import os
 import json
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import anndata as ad
 import dask.array as da
@@ -34,7 +34,7 @@ import vigra
 import zarr
 
 from fractal_tasks_core.channels import (ChannelInputModel, 
-                                         get_channel_from_image_zarr
+                get_channel_from_image_zarr
 )
 from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.masked_loading import masked_loading_wrapper
@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 __OME_NGFF_VERSION__ = fractal_tasks_core.__OME_NGFF_VERSION__
 
 
-def seutp_ilastik(model_path: str):
+def setup_ilastik(model_path: str):
     """Setup Ilastik headless shell."""
     args = app.parse_args([])
     args.headless = True
@@ -174,9 +174,6 @@ def ilastik_pixel_classification_segmentation(
     Args:
     zarr_url: Path or url to the individual OME-Zarr image to be processed.
             (standard argument for Fractal tasks, managed by Fractal server).
-    component: Path to the OME-Zarr image in the OME-Zarr plate that is
-        processed. Example: `"some_plate.zarr/B/03/0"`.
-        (standard argument for Fractal tasks, managed by Fractal server).
     level: Pyramid level of the image to be segmented. Choose `0` to
         process at full resolution.
     channel: Primary channel for pixel classification; requires either
@@ -226,7 +223,7 @@ def ilastik_pixel_classification_segmentation(
     # Setup Ilastik headless shell
     # TODO: check if info about training mode can be retreived e.g. if model needs
     # single or dual channel input and throw error if wrong input is provided
-    shell = seutp_ilastik(ilastik_model)
+    shell = setup_ilastik(ilastik_model)
 
     # Find channel index
     tmp_channel = get_channel_from_image_zarr(
@@ -249,7 +246,7 @@ def ilastik_pixel_classification_segmentation(
         if tmp_channel_2:
             ind_channel_c2 = tmp_channel.index
         else:
-            return
+            return ValueError(f"Channel {channel2} could not be loaded.")
 
     # Set output channel label if none is provided
     if output_label_name is None:
