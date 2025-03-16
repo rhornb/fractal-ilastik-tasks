@@ -221,9 +221,16 @@ def ilastik_pixel_classification_segmentation(
     )
 
     # Setup Ilastik headless shell
-    # TODO: check if info about training mode can be retreived e.g. if model needs
-    # single or dual channel input and throw error if wrong input is provided
     shell = setup_ilastik(ilastik_model)
+
+    # Check model channel requirements
+    expected_channels = check_ilastik_model_channels(shell)
+    if expected_channels == 2 and channel2 is None:
+        raise ValueError(f"Ilastik model expects two channels as "
+                         "input but only one channel was provided")
+    elif expected_channels == 1 and channel2 is not None:
+        raise ValueError(f"Ilastik model expects 1 channel as "
+                         "input but two channels were provided")
 
     # Find channel index
     tmp_channel = get_channel_from_image_zarr(
@@ -524,6 +531,25 @@ def ilastik_pixel_classification_segmentation(
             overwrite=overwrite,
             table_attrs=table_attrs,
         )
+
+
+def check_ilastik_model_channels(shell) -> int:
+    """Check number of input channels expected by Ilastik model.
+    
+    Args:
+        shell: Initialized Ilastik shell with loaded model
+        
+    Returns:
+        int: Number of expected input channels
+    """
+    # Get dataSelection applet from workflow
+    data_selection = shell.workflow.dataSelectionApplet
+    
+    # Get slot info containing expected channels
+    slot_info = data_selection.topLevelOperator.DatasetRoles.value
+    
+    # Return number of expected channels
+    return len(slot_info)
 
 
 if __name__ == "__main__":
