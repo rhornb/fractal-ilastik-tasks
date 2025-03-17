@@ -20,7 +20,7 @@ curl -O https://raw.githubusercontent.com/fractal-analytics-platform/fractal-ila
 * The scrip might require some small modifications.
 
 ```bash
-VERSION="0.2.0" # Version of the package to install (by default the latest version)
+VERSION="v0.2.0" # Version of the package to install (by default the latest version)
 COMMMAND="mamba" # Command to use to create the environment (mamba or conda) 
 # Location of the environment
 # If ENVPREFIX is not NULL, the environment will be created with the prefix $ENVPREFIX/$ENVNAME 

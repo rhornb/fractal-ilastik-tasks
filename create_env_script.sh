@@ -1,5 +1,5 @@
-VERSION="0.2.0"
-COMMMAND="mamba"
+VERSION="v0.2.0"
+COMMMAND="conda"
 # If ENVPREFIX is not NULL, the environment will be created with the prefix $ENVPREFIX/$ENVNAME 
 # If ENVPREFIX is NULL, the environment will be created in the default location
 ENVPREFIX="NULL" 
