@@ -2,9 +2,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-import zarr
 from devtools import debug
-
 from fractal_tasks_core.channels import ChannelInputModel
 
 from ilastik_tasks.ilastik_pixel_classification_segmentation import (
@@ -12,6 +10,7 @@ from ilastik_tasks.ilastik_pixel_classification_segmentation import (
 )
 
 # TODO: add 2D testdata
+
 
 @pytest.fixture(scope="function")
 def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
@@ -28,9 +27,11 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
     """
     Test the 3D ilastik_pixel_classification_segmentation task with dual channel input.
     """
-    ilastik_model = (Path(__file__).parent / "data/pixel_classifier_3D_dual_channel.ilp").as_posix()
+    ilastik_model = (
+        Path(__file__).parent / "data/pixel_classifier_3D_dual_channel.ilp"
+    ).as_posix()
     zarr_url = f"{test_data_dir_3d}/B/03/0"
-    
+
     ilastik_pixel_classification_segmentation(
         zarr_url=zarr_url,
         level=4,
@@ -39,11 +40,11 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
         ilastik_model=str(ilastik_model),
         output_label_name="test_label",
     )
-    
-    # Test failing of task if model was trained with two channels 
+
+    # Test failing of task if model was trained with two channels
     # but only one is provided
     with pytest.raises(ValueError):
-            ilastik_pixel_classification_segmentation(
+        ilastik_pixel_classification_segmentation(
             zarr_url=zarr_url,
             level=0,
             channel=ChannelInputModel(label="DAPI_2"),

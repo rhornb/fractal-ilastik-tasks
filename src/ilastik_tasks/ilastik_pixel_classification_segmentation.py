@@ -19,23 +19,19 @@ Ilastik adaptation by:
     Alexa McIntyre <alexa.mcintyre@uzh.ch>
     Ruth Hornbachner <ruth.hornbachner@uzh.ch>
 """
-import os
+
 import json
 import logging
+import os
 from typing import Any, Optional
 
 import anndata as ad
 import dask.array as da
 import fractal_tasks_core
 import numpy as np
-from skimage.measure import label, regionprops
-from skimage.morphology import remove_small_holes
 import vigra
 import zarr
-
-from fractal_tasks_core.channels import (ChannelInputModel, 
-                get_channel_from_image_zarr
-)
+from fractal_tasks_core.channels import ChannelInputModel, get_channel_from_image_zarr
 from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.masked_loading import masked_loading_wrapper
 from fractal_tasks_core.ngff import load_NgffImageMeta
@@ -57,6 +53,8 @@ from ilastik.applets.dataSelection.opDataSelection import (
     PreloadedArrayDatasetInfo,
 )
 from pydantic import validate_call
+from skimage.measure import label, regionprops
+from skimage.morphology import remove_small_holes
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +84,12 @@ def segment_ROI(
     Args:
         input_data: np.ndarray of shape (t, z, y, x, c).
         shell: Ilastik headless shell.
-        foreground_class: Class to be considered as foreground 
+        foreground_class: Class to be considered as foreground
             during prediction thresholding.
         threshold: Threshold for the Ilastik model.
         min_size: Minimum size for the Ilastik model.
         label_dtype: Label images are cast into this `np.dtype`.
+
     Returns:
         np.ndarray: Segmented image. Shape (z, y, x).
     """
@@ -106,7 +105,7 @@ def segment_ROI(
             )
         }
     ]
-        
+
     ilastik_output = shell.workflow.batchProcessingApplet.run_export(
         data, export_to_array=True
     )[0]
@@ -122,9 +121,11 @@ def segment_ROI(
     # take mask of regions above threshold
     ilastik_output[ilastik_output < threshold] = 0
     ilastik_output[ilastik_output >= threshold] = 1
-    
+
     # remove small holes
-    ilastik_output = remove_small_holes(ilastik_output.astype(bool), area_threshold=min_size)
+    ilastik_output = remove_small_holes(
+        ilastik_output.astype(bool), area_threshold=min_size
+    )
 
     # label image
     ilastik_labels = label(ilastik_output)
@@ -145,7 +146,7 @@ def segment_ROI(
         ilastik_labels = label(ilastik_labels)
         print(f"number of labels after filtering for size = {ilastik_labels.max()}")
         label_props = regionprops(ilastik_labels)
-        
+
     return ilastik_labels.astype(label_dtype)
 
 
@@ -179,7 +180,7 @@ def ilastik_pixel_classification_segmentation(
         channel: Primary channel for pixel classification; requires either
             `wavelength_id` (e.g. `A01_C01`) or `label` (e.g. `DAPI`).
         channel2: Second channel for pixel classification (in the same format as
-            `channel`). Use only if second channel has also been used during 
+            `channel`). Use only if second channel has also been used during
             Ilastik model training.
         input_ROI_table: Name of the ROI table over which the task loops to
             apply Cellpose segmentation. Examples: `FOV_ROI_table` => loop over
@@ -202,7 +203,7 @@ def ilastik_pixel_classification_segmentation(
         overwrite: If `True`, overwrite the task output.
     """
     logger.info(f"Processing {zarr_url=}")
-    
+
     # Preliminary checks on Cellpose model
     if not os.path.exists(ilastik_model):
         raise ValueError(f"{ilastik_model=} path does not exist.")
@@ -226,11 +227,14 @@ def ilastik_pixel_classification_segmentation(
     # Check model channel requirements
     expected_channels = check_ilastik_model_channels(shell)
     if expected_channels == 2 and channel2 is None:
-        raise ValueError(f"Ilastik model expects two channels as "
-                         "input but only one channel was provided")
+        raise ValueError(
+            "Ilastik model expects two channels as "
+            "input but only one channel was provided"
+        )
     elif expected_channels == 1 and channel2 is not None:
-        raise ValueError(f"Ilastik model expects 1 channel as "
-                         "input but two channels were provided")
+        raise ValueError(
+            "Ilastik model expects 1 channel as " "input but two channels were provided"
+        )
 
     # Find channel index
     tmp_channel = get_channel_from_image_zarr(
@@ -242,7 +246,7 @@ def ilastik_pixel_classification_segmentation(
         ind_channel = tmp_channel.index
     else:
         return
-    
+
     # Find channel index for second channel, if one is provided
     if channel2:
         tmp_channel_2 = get_channel_from_image_zarr(
@@ -275,9 +279,7 @@ def ilastik_pixel_classification_segmentation(
     ROI_table = ad.read_zarr(ROI_table_path)
 
     # Perform some checks on the ROI table
-    valid_ROI_table = is_ROI_table_valid(
-        table_path=ROI_table_path, use_masks=use_masks
-    )
+    valid_ROI_table = is_ROI_table_valid(table_path=ROI_table_path, use_masks=use_masks)
     if use_masks and not valid_ROI_table:
         logger.info(
             f"ROI table at {ROI_table_path} cannot be used for masked "
@@ -306,7 +308,7 @@ def ilastik_pixel_classification_segmentation(
 
     # Load zattrs file
     zattrs_file = f"{zarr_url}/.zattrs"
-    with open(zattrs_file, "r") as jsonfile:
+    with open(zattrs_file) as jsonfile:
         zattrs = json.load(jsonfile)
 
     # Preliminary checks on multiscales
@@ -335,7 +337,7 @@ def ilastik_pixel_classification_segmentation(
         reference_level=level,
         remove_channel_axis=True,
     )
-    
+
     label_attrs = {
         "image-label": {
             "version": __OME_NGFF_VERSION__,
@@ -346,9 +348,7 @@ def ilastik_pixel_classification_segmentation(
                 "name": output_label_name,
                 "version": __OME_NGFF_VERSION__,
                 "axes": [
-                    ax
-                    for ax in multiscales[0]["axes"]
-                    if ax["type"] != "channel"
+                    ax for ax in multiscales[0]["axes"] if ax["type"] != "channel"
                 ],
                 "datasets": new_datasets,
             }
@@ -364,9 +364,7 @@ def ilastik_pixel_classification_segmentation(
         logger=logger,
     )
 
-    logger.info(
-        f"Helper function `prepare_label_group` returned {label_group=}"
-    )
+    logger.info(f"Helper function `prepare_label_group` returned {label_group=}")
     logger.info(f"Output label path: {zarr_url}/labels/{output_label_name}/0")
     store = zarr.storage.FSStore(f"{zarr_url}/labels/{output_label_name}/0")
     label_dtype = np.uint32
@@ -391,7 +389,7 @@ def ilastik_pixel_classification_segmentation(
     logger.info(
         f"mask will have shape {data_zyx.shape} " f"and chunks {data_zyx.chunks}"
     )
-    
+
     # Initialize other things
     logger.info(f"Start ilastik pixel classification task for {zarr_url}")
     logger.info(f"{data_zyx.shape}")
@@ -413,7 +411,7 @@ def ilastik_pixel_classification_segmentation(
             slice(s_x, e_x),
         )
         logger.info(f"Now processing ROI {i_ROI+1}/{num_ROIs}")
-        
+
         # Prepare single-channel or dual-channel input for Ilastik
         if channel2:
             # Dual channel mode
@@ -433,12 +431,10 @@ def ilastik_pixel_classification_segmentation(
             )
             logger.info(f"dual channel img shape {img_np.shape=}")
         else:
-            img_np = load_region(data_zyx, 
-                                 region, 
-                                 compute=True, 
-                                 return_as_3D=True
-            )
-            img_np = img_np[np.newaxis, ...] # input for masked_wrapper has to be (czyx)
+            img_np = load_region(data_zyx, region, compute=True, return_as_3D=True)
+            img_np = img_np[
+                np.newaxis, ...
+            ]  # input for masked_wrapper has to be (czyx)
             logger.info(f"single channel img shape {img_np.shape=}")
 
         # Prepare keyword arguments for segment_ROI function
@@ -494,7 +490,8 @@ def ilastik_pixel_classification_segmentation(
         )
 
     logger.info(
-        f"End Ilastik pixel-classification task for {zarr_url}, " "now building pyramids."
+        f"End Ilastik pixel-classification task for {zarr_url}, "
+        "now building pyramids."
     )
 
     # Starting from on-disk highest-resolution data, build and write to disk a
@@ -535,19 +532,19 @@ def ilastik_pixel_classification_segmentation(
 
 def check_ilastik_model_channels(shell) -> int:
     """Check number of input channels expected by Ilastik model.
-    
+
     Args:
         shell: Initialized Ilastik shell with loaded model
-        
+
     Returns:
         int: Number of expected input channels
     """
     # Get dataSelection applet from workflow
     data_selection = shell.workflow.dataSelectionApplet
-    
+
     # Get slot info containing expected channels
     slot_info = data_selection.topLevelOperator.DatasetRoles.value
-    
+
     # Return number of expected channels
     return len(slot_info)
 

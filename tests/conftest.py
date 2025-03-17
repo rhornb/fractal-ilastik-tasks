@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pooch
 import pytest
-from devtools import debug
+
 
 @pytest.fixture(scope="session")
 def testdata_path() -> Path:
@@ -52,4 +52,3 @@ def zenodo_zarr_3d(testdata_path: Path) -> str:
         shutil.rmtree(str(folder))
     shutil.copytree(Path(zarr_full_path) / file_name, folder)
     return Path(folder)
-
