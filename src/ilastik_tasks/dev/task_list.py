@@ -11,5 +11,6 @@ TASK_LIST = [
         tags=[
             "Pixel Classifier",
         ],
+        docs_info="file:docs_info/ilastik_pixel_classifier.md"
     ),
 ]

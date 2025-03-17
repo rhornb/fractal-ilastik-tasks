@@ -6,7 +6,7 @@ ENVPREFIX="NULL"
 
 # Do NOT change the following lines
 ENVNAME=ilastik-tasks-$VERSION
-PYTHON="python=3.9"
+PYTHON="python=3.10"
 
 if [ "$ENVPREFIX" == "NULL" ]; then
     LOCATION="--name $ENVNAME"
@@ -19,7 +19,7 @@ $COMMMAND run $COMMMAND create $LOCATION \
                                --override-channels \
                                -c pytorch \
                                -c ilastik-forge \
-                               -c conda-forge $PYTHON ilastik vigra \
+                               -c conda-forge $PYTHON ilastik-core vigra \
                                --no-channel-priority --yes
 
 echo "Installing ilastik-tasks version $VERSION"
