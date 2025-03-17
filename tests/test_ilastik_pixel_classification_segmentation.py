@@ -33,7 +33,7 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
     
     ilastik_pixel_classification_segmentation(
         zarr_url=zarr_url,
-        level=0,
+        level=4,
         channel=ChannelInputModel(label="DAPI_2"),
         channel2=ChannelInputModel(label="ECadherin_2"),
         ilastik_model=str(ilastik_model),
