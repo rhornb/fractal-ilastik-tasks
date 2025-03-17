@@ -19,7 +19,7 @@ $COMMMAND run $COMMMAND create $LOCATION \
                                --override-channels \
                                -c pytorch \
                                -c ilastik-forge \
-                               -c conda-forge $PYTHON ilastik \
+                               -c conda-forge $PYTHON ilastik vigra \
                                --no-channel-priority --yes
 
 echo "Installing ilastik-tasks version $VERSION"
