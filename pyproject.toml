@@ -23,14 +23,15 @@ license = { text = "BSD-3-Clause" }
 authors = [{ name = "Lorenzo Cerrone", email = "lorenzo.cerrone@uzh.ch" }]
 
 # Required Python version and dependencies
-requires-python = ">=3.9"
-dependencies = ["fractal-tasks-core == 1.3.3", "scikit-image", "numpy < 2"]
+requires-python = ">=3.10"
+dependencies = ["fractal-tasks-core == 1.4.3"]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies)
 [project.optional-dependencies]
 dev = [
     "devtools",
+    "pooch",
     "hatch",
     "pytest",
     "requests",
@@ -42,7 +43,7 @@ dev = [
 # https://docs.astral.sh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py311"
 src = ["src"]
 
 # https://docs.astral.sh/ruff/rules

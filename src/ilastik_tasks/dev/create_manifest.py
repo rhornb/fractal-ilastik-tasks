@@ -6,7 +6,4 @@ if __name__ == "__main__":
     PACKAGE = "ilastik_tasks"
     AUTHORS = "Lorenzo Cerrone"
     docs_link = "https://github.com/fractal-analytics-platform/fractal-ilastik-tasks"
-    if docs_link:
-        create_manifest(package=PACKAGE, authors=AUTHORS, docs_link=docs_link)
-    else:
-        create_manifest(package=PACKAGE, authors=AUTHORS)
+    create_manifest(package=PACKAGE, authors=AUTHORS, docs_link=docs_link)
