@@ -31,7 +31,12 @@ import fractal_tasks_core
 import numpy as np
 import vigra
 import zarr
-from fractal_tasks_core.channels import ChannelInputModel, get_channel_from_image_zarr
+from fractal_tasks_core.tasks.cellpose_utils import (
+    CellposeChannel1InputModel,
+)
+from fractal_tasks_core.tasks.cellpose_utils import (
+    CellposeChannel2InputModel,
+)
 from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.masked_loading import masked_loading_wrapper
 from fractal_tasks_core.ngff import load_NgffImageMeta
@@ -52,7 +57,7 @@ from ilastik import app
 from ilastik.applets.dataSelection.opDataSelection import (
     PreloadedArrayDatasetInfo,
 )
-from pydantic import validate_call
+from pydantic import validate_call, Field
 from skimage.measure import label, regionprops
 from skimage.morphology import remove_small_holes
 
@@ -153,8 +158,10 @@ def ilastik_pixel_classification_segmentation(
     zarr_url: str,
     # Task-specific arguments
     level: int,
-    channel: ChannelInputModel,
-    channel2: Optional[ChannelInputModel] = None,
+    channel: CellposeChannel1InputModel,
+    channel2: CellposeChannel2InputModel = Field(
+        default_factory=CellposeChannel2InputModel
+    ),
     input_ROI_table: str = "FOV_ROI_table",
     output_ROI_table: Optional[str] = None,
     output_label_name: Optional[str] = None,
@@ -233,32 +240,24 @@ def ilastik_pixel_classification_segmentation(
         )
 
     # Find channel index
-    tmp_channel = get_channel_from_image_zarr(
-        image_zarr_path=zarr_url,
-        wavelength_id=channel.wavelength_id,
-        label=channel.label,
-    )
-    if tmp_channel:
-        ind_channel = tmp_channel.index
+    omero_channel = channel.get_omero_channel(zarr_url)
+    if omero_channel:
+        ind_channel = omero_channel.index
     else:
         return
 
     # Find channel index for second channel, if one is provided
-    if channel2:
-        tmp_channel_2 = get_channel_from_image_zarr(
-            image_zarr_path=zarr_url,
-            wavelength_id=channel2.wavelength_id,
-            label=channel2.label,
-        )
-        if tmp_channel_2:
-            ind_channel_c2 = tmp_channel_2.index
+    if channel2.is_set():
+        omero_channel_2 = channel2.get_omero_channel(zarr_url)
+        if omero_channel_2:
+            ind_channel_c2 = omero_channel_2.index
         else:
-            return ValueError(f"Channel {channel2} could not be loaded.")
-
-    # Set output channel label if none is provided
+            return
+        
+    # Set channel label
     if output_label_name is None:
         try:
-            channel_label = tmp_channel.label
+            channel_label = omero_channel.label
             output_label_name = f"label_{channel_label}"
         except (KeyError, IndexError):
             output_label_name = f"label_{ind_channel}"

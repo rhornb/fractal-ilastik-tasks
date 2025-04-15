@@ -15,8 +15,8 @@
       },
       "args_schema_parallel": {
         "$defs": {
-          "ChannelInputModel": {
-            "description": "A channel which is specified by either `wavelength_id` or `label`.",
+          "CellposeChannel1InputModel": {
+            "description": "Channel input for cellpose with normalization options.",
             "properties": {
               "wavelength_id": {
                 "title": "Wavelength Id",
@@ -27,9 +27,78 @@
                 "title": "Label",
                 "type": "string",
                 "description": "Name of the channel. Can only be specified if wavelength_id is not set."
+              },
+              "normalize": {
+                "$ref": "#/$defs/CellposeCustomNormalizer",
+                "title": "Normalize",
+                "description": "Validator to handle different normalization scenarios for Cellpose models"
               }
             },
-            "title": "ChannelInputModel",
+            "title": "CellposeChannel1InputModel",
+            "type": "object"
+          },
+          "CellposeChannel2InputModel": {
+            "description": "Channel input for secondary cellpose channel with normalization options.",
+            "properties": {
+              "wavelength_id": {
+                "title": "Wavelength Id",
+                "type": "string",
+                "description": "Unique ID for the channel wavelength, e.g. `A01_C01`. Can only be specified if label is not set."
+              },
+              "label": {
+                "title": "Label",
+                "type": "string",
+                "description": "Name of the channel. Can only be specified if wavelength_id is not set."
+              },
+              "normalize": {
+                "$ref": "#/$defs/CellposeCustomNormalizer",
+                "title": "Normalize",
+                "description": "Validator to handle different normalization scenarios for Cellpose models"
+              }
+            },
+            "title": "CellposeChannel2InputModel",
+            "type": "object"
+          },
+          "CellposeCustomNormalizer": {
+            "description": "Validator to handle different normalization scenarios for Cellpose models",
+            "properties": {
+              "type": {
+                "default": "default",
+                "enum": [
+                  "default",
+                  "custom",
+                  "no_normalization"
+                ],
+                "title": "Type",
+                "type": "string",
+                "description": "One of `default` (Cellpose default normalization), `custom` (using the other custom parameters) or `no_normalization`."
+              },
+              "lower_percentile": {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Lower Percentile",
+                "type": "number",
+                "description": "Specify a custom lower-bound percentile for rescaling as a float value between 0 and 100. Set to 1 to run the same as default). You can only specify percentiles or bounds, not both."
+              },
+              "upper_percentile": {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Upper Percentile",
+                "type": "number",
+                "description": "Specify a custom upper-bound percentile for rescaling as a float value between 0 and 100. Set to 99 to run the same as default, set to e.g. 99.99 if the default rescaling was too harsh. You can only specify percentiles or bounds, not both."
+              },
+              "lower_bound": {
+                "title": "Lower Bound",
+                "type": "integer",
+                "description": "Explicit lower bound value to rescale the image at. Needs to be an integer, e.g. 100. You can only specify percentiles or bounds, not both."
+              },
+              "upper_bound": {
+                "title": "Upper Bound",
+                "type": "integer",
+                "description": "Explicit upper bound value to rescale the image at. Needs to be an integer, e.g. 2000. You can only specify percentiles or bounds, not both."
+              }
+            },
+            "title": "CellposeCustomNormalizer",
             "type": "object"
           }
         },
@@ -46,16 +115,12 @@
             "description": "Pyramid level of the image to be segmented. Choose `0` to process at full resolution."
           },
           "channel": {
-            "$ref": "#/$defs/ChannelInputModel",
+            "$ref": "#/$defs/CellposeChannel1InputModel",
             "title": "Channel",
             "description": "Primary channel for pixel classification; requires either `wavelength_id` (e.g. `A01_C01`) or `label` (e.g. `DAPI`)."
           },
           "channel2": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/ChannelInputModel"
-              }
-            ],
+            "$ref": "#/$defs/CellposeChannel2InputModel",
             "title": "Channel2",
             "description": "Second channel for pixel classification (in the same format as `channel`). Use only if second channel has also been used during Ilastik model training."
           },

@@ -3,8 +3,12 @@ from pathlib import Path
 
 import pytest
 from devtools import debug
-from fractal_tasks_core.channels import ChannelInputModel
-
+from fractal_tasks_core.tasks.cellpose_utils import (
+    CellposeChannel1InputModel,
+)
+from fractal_tasks_core.tasks.cellpose_utils import (
+    CellposeChannel2InputModel,
+)
 from src.ilastik_tasks.ilastik_pixel_classification_segmentation import (
     ilastik_pixel_classification_segmentation,
 )
@@ -36,8 +40,8 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
     ilastik_pixel_classification_segmentation(
         zarr_url=zarr_url,
         level=4,
-        channel=ChannelInputModel(label="DAPI_2"),
-        channel2=ChannelInputModel(label="ECadherin_2"),
+        channel=CellposeChannel1InputModel(label="DAPI_2"),
+        channel2=CellposeChannel2InputModel(label="ECadherin_2"),
         ilastik_model=str(ilastik_model),
         output_label_name="test_label",
     )
@@ -48,7 +52,7 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
         ilastik_pixel_classification_segmentation(
             zarr_url=zarr_url,
             level=0,
-            channel=ChannelInputModel(label="DAPI_2"),
+            channel=CellposeChannel1InputModel(label="DAPI_2"),
             channel2=None,
             ilastik_model=str(ilastik_model),
             output_label_name="test_label_single_channel",
