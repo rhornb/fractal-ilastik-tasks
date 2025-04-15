@@ -97,7 +97,7 @@ def segment_ROI(
     # Shape from (czyx) to (tzyxc)
     input_data = np.moveaxis(input_data, 0, -1)
     input_data = np.expand_dims(input_data, axis=0)
-    print(f"{input_data.shape=}")
+    logger.info(f"{input_data.shape=}")
     data = [
         {
             "Raw Data": PreloadedArrayDatasetInfo(
@@ -109,26 +109,22 @@ def segment_ROI(
     ilastik_output = shell.workflow.batchProcessingApplet.run_export(
         data, export_to_array=True
     )[0]
-    logger.info(f"{ilastik_output.shape=}")
+    logger.info(f"{ilastik_output.shape=} after ilastik prediction")
 
     # Get foreground class and reshape to 3D
-    ilastik_output = ilastik_output[..., foreground_class]
-    ilastik_output = np.reshape(
-        ilastik_output, (input_data.shape[1], input_data.shape[2], input_data.shape[3])
-    )
-    logger.info(f"{ilastik_output.shape=}")
+    ilastik_output = np.squeeze(ilastik_output[..., foreground_class])
+    print(f"{ilastik_output.shape=} after foreground class selection")
 
     # take mask of regions above threshold
-    ilastik_output[ilastik_output < threshold] = 0
-    ilastik_output[ilastik_output >= threshold] = 1
+    ilastik_labels = ilastik_output > threshold
 
     # remove small holes
-    ilastik_output = remove_small_holes(
-        ilastik_output.astype(bool), area_threshold=min_size
+    ilastik_labels = remove_small_holes(
+        ilastik_labels, area_threshold=min_size
     )
 
     # label image
-    ilastik_labels = label(ilastik_output)
+    ilastik_labels = label(ilastik_labels)
 
     # remove objects below min_size - also removes anything with major or minor axis
     # length of 0 for compatibility with current measurements task (01.24)
@@ -141,10 +137,10 @@ def segment_ROI(
             or (label_props[i].axis_major_length < 1)
             or (label_props[i].major_axis_length < 1)
         ]
-        print(f"number of labels before filtering for size = {ilastik_labels.max()}")
+        logger.info(f"number of labels before filtering for size = {ilastik_labels.max()}")
         ilastik_labels[np.isin(ilastik_labels, labels2remove)] = 0
         ilastik_labels = label(ilastik_labels)
-        print(f"number of labels after filtering for size = {ilastik_labels.max()}")
+        logger.info(f"number of labels after filtering for size = {ilastik_labels.max()}")
         label_props = regionprops(ilastik_labels)
 
     return ilastik_labels.astype(label_dtype)
@@ -255,7 +251,7 @@ def ilastik_pixel_classification_segmentation(
             label=channel2.label,
         )
         if tmp_channel_2:
-            ind_channel_c2 = tmp_channel.index
+            ind_channel_c2 = tmp_channel_2.index
         else:
             return ValueError(f"Channel {channel2} could not be loaded.")
 
@@ -382,7 +378,7 @@ def ilastik_pixel_classification_segmentation(
         chunks=chunks,
         dtype=label_dtype,
         store=store,
-        overwrite=False,
+        overwrite=overwrite,
         dimension_separator="/",
     )
 
