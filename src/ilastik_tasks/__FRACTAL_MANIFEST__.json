@@ -95,6 +95,12 @@
             "type": "string",
             "description": "Path to the Ilastik model (e.g. `\"somemodel.ilp\"`)."
           },
+          "relabeling": {
+            "default": true,
+            "title": "Relabeling",
+            "type": "boolean",
+            "description": "If `True`, apply relabeling so that label values are unique for all objects in the well."
+          },
           "foreground_class": {
             "default": 0,
             "title": "Foreground Class",

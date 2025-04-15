@@ -42,6 +42,7 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
         channel2=IlastikChannel2InputModel(label="ECadherin_2"),
         ilastik_model=str(ilastik_model),
         output_label_name="test_label",
+        relabeling=True,
     )
 
     # Test failing of task if model was trained with two channels
@@ -49,9 +50,11 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
     with pytest.raises(ValueError):
         ilastik_pixel_classification_segmentation(
             zarr_url=zarr_url,
-            level=0,
+            level=4,
             channel=IlastikChannel1InputModel(label="DAPI_2"),
             channel2=None,
             ilastik_model=str(ilastik_model),
             output_label_name="test_label_single_channel",
         )
+
+

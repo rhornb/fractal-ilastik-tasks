@@ -76,22 +76,29 @@ def setup_ilastik(model_path: str):
 
 def segment_ROI(
     input_data: np.ndarray,
+    num_labels_tot: dict[str, int],
     shell: Any,
     foreground_class: int = 0,
     threshold: float = 0.5,
     min_size: int = 15,
     label_dtype: Optional[np.dtype] = None,
+    relabeling: bool = True,
 ) -> np.ndarray:
     """Run the Ilastik model on a single ROI.
 
     Args:
         input_data: np.ndarray of shape (t, z, y, x, c).
+        num_labels_tot: Number of labels already in total image. Used for
+            relabeling purposes. Using a dict to have a mutable object that
+            can be edited from within the function without having to be passed
+            back through the masked_loading_wrapper.
         shell: Ilastik headless shell.
         foreground_class: Class to be considered as foreground
             during prediction thresholding.
         threshold: Threshold for the Ilastik model.
         min_size: Minimum size for the Ilastik model.
         label_dtype: Label images are cast into this `np.dtype`.
+        relabeling: Whether relabeling based on num_labels_tot is performed.
 
     Returns:
         np.ndarray: Segmented image. Shape (z, y, x).
@@ -145,6 +152,23 @@ def segment_ROI(
         ilastik_labels = label(ilastik_labels)
         logger.info(f"number of labels after filtering for size = {ilastik_labels.max()}")
         label_props = regionprops(ilastik_labels)
+        
+    # Shift labels and update relabeling counters
+    if relabeling:
+        num_labels_roi = np.max(ilastik_labels)
+        ilastik_labels[ilastik_labels > 0] += num_labels_tot["num_labels_tot"]
+        num_labels_tot["num_labels_tot"] += num_labels_roi
+
+        # Write some logs
+        logger.info(f"ROI had {num_labels_roi=}, {num_labels_tot=}")
+
+        # Check that total number of labels is under control
+        if num_labels_tot["num_labels_tot"] > np.iinfo(label_dtype).max:
+            raise ValueError(
+                "ERROR in re-labeling:"
+                f"Reached {num_labels_tot} labels, "
+                f"but dtype={label_dtype}"
+            )
 
     return ilastik_labels.astype(label_dtype)
 
@@ -166,6 +190,7 @@ def ilastik_pixel_classification_segmentation(
     use_masks: bool = True,
     # Ilastik-related arguments
     ilastik_model: str,
+    relabeling: bool = True,
     foreground_class: int = 0,
     threshold: float = 0.5,
     min_size: int = 15,
@@ -197,6 +222,8 @@ def ilastik_pixel_classification_segmentation(
             loading is relevant when only a subset of the bounding box should
             actually be processed (e.g. running within `emb_ROI_table`).
         ilastik_model: Path to the Ilastik model (e.g. `"somemodel.ilp"`).
+        relabeling: If `True`, apply relabeling so that label values are
+            unique for all objects in the well.
         foreground_class: Class to be considered as foreground during
             prediction thresholding.
         threshold: Probabiltiy threshold for the Ilastik model.
@@ -385,8 +412,12 @@ def ilastik_pixel_classification_segmentation(
 
     # Initialize other things
     logger.info(f"Start ilastik pixel classification task for {zarr_url}")
+    logger.info(f"relabeling: {relabeling}")
     logger.info(f"{data_zyx.shape}")
     logger.info(f"{data_zyx.chunks}")
+
+    # Counters for relabeling
+    num_labels_tot = {"num_labels_tot": 0}
 
     # Iterate over ROIs
     num_ROIs = len(list_indices)
@@ -433,10 +464,12 @@ def ilastik_pixel_classification_segmentation(
         # Prepare keyword arguments for segment_ROI function
         kwargs_segment_ROI = {
             "shell": shell,
+            "num_labels_tot": num_labels_tot,
             "foreground_class": foreground_class,
             "threshold": threshold,
             "min_size": min_size,
             "label_dtype": label_dtype,
+            "relabeling": relabeling,
         }
 
         # Prepare keyword arguments for preprocessing function
