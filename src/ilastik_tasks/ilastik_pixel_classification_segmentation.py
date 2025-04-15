@@ -31,11 +31,9 @@ import fractal_tasks_core
 import numpy as np
 import vigra
 import zarr
-from fractal_tasks_core.tasks.cellpose_utils import (
-    CellposeChannel1InputModel,
-)
-from fractal_tasks_core.tasks.cellpose_utils import (
-    CellposeChannel2InputModel,
+from ilastik_tasks.ilastik_utils import (
+    IlastikChannel1InputModel,
+    IlastikChannel2InputModel,
 )
 from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.masked_loading import masked_loading_wrapper
@@ -158,9 +156,9 @@ def ilastik_pixel_classification_segmentation(
     zarr_url: str,
     # Task-specific arguments
     level: int,
-    channel: CellposeChannel1InputModel,
-    channel2: CellposeChannel2InputModel = Field(
-        default_factory=CellposeChannel2InputModel
+    channel: IlastikChannel1InputModel,
+    channel2: IlastikChannel2InputModel = Field(
+        default_factory=IlastikChannel2InputModel
     ),
     input_ROI_table: str = "FOV_ROI_table",
     output_ROI_table: Optional[str] = None,
