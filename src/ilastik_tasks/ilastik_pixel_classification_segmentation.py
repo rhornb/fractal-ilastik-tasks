@@ -113,7 +113,7 @@ def segment_ROI(
 
     # Get foreground class and reshape to 3D
     ilastik_output = np.squeeze(ilastik_output[..., foreground_class])
-    print(f"{ilastik_output.shape=} after foreground class selection")
+    logger.info(f"{ilastik_output.shape=} after foreground class selection")
 
     # take mask of regions above threshold
     ilastik_labels = ilastik_output > threshold

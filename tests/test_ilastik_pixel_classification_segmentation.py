@@ -16,7 +16,6 @@ def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
     """
     Copy a test-data folder into a temporary folder.
     """
-    tmp_path = Path("/data/active/rhornb/fractal/pytest/")
     dest_dir = (tmp_path / "ilastik_data_3d").as_posix()
     if Path(dest_dir).exists():
         shutil.rmtree(dest_dir)
