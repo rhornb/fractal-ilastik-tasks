@@ -378,7 +378,7 @@ def ilastik_pixel_classification_segmentation(
         chunks=chunks,
         dtype=label_dtype,
         store=store,
-        overwrite=overwrite,
+        overwrite=False,
         dimension_separator="/",
     )
 
