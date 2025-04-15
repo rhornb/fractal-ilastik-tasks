@@ -5,12 +5,11 @@ import pytest
 from devtools import debug
 from fractal_tasks_core.channels import ChannelInputModel
 
-from ilastik_tasks.ilastik_pixel_classification_segmentation import (
+from src.ilastik_tasks.ilastik_pixel_classification_segmentation import (
     ilastik_pixel_classification_segmentation,
 )
 
 # TODO: add 2D testdata
-
 
 @pytest.fixture(scope="function")
 def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
@@ -18,6 +17,8 @@ def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
     Copy a test-data folder into a temporary folder.
     """
     dest_dir = (tmp_path / "ilastik_data_3d").as_posix()
+    if Path(dest_dir).exists():
+        shutil.rmtree(dest_dir)
     debug(zenodo_zarr_3d, dest_dir)
     shutil.copytree(zenodo_zarr_3d, dest_dir)
     return dest_dir
