@@ -114,3 +114,7 @@ ENV/
 *.zarr
 # Test data loaded via pooch
 /tests/data/10_5281_zenodo_14883998
+# pixi environments
+.pixi
+*.egg-info
+pixi.lock
