@@ -83,17 +83,19 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: 👷 Build
+      - name: Build
         run: |
-          python -m pip install build
-          python -m build
+          python -m pip install hatch hatch-vcs
+          hatch build
 
-      - name: 🚢 Publish to PyPI
-        # TODO remove the "if: false" line when the package is ready for pypi release
-        if: false
-        uses: pypa/gh-action-pypi-publish@release/v1
+      # This depends on conda packages not available on PyPI
+      #- name: 🚢 Publish to PyPI
+      # TODO remove the "if: false" line when the package is ready for pypi release
+      #  if: false
+      #  uses: pypa/gh-action-pypi-publish@release/v1
 
-      - uses: softprops/action-gh-release@v2
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: './dist/*'

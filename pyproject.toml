@@ -12,6 +12,27 @@ source = "vcs"
 [tool.hatch.build.targets.wheel]
 packages = ["src/ilastik_tasks"]
 
+# Clean up the source distribution to avoid big tag.gz files
+[tool.hatch.build.targets.sdist]
+exclude = [
+    # Pixi lock excluded by default see https://github.com/fractal-analytics-platform/fractal-server/issues/2624
+    "pixi.lock",
+    # Exclude tests from the source distribution
+    "tests",
+    # Exclude typically large files and directories that are not needed
+    # This might not exists or be named differently in your project
+    # TBD if we want to include these or not
+    "docs",
+    "data",
+    "examples",
+    "notebooks",
+    ".github",
+    # Remove all jupyter notebook and checkpoints
+    "**/*.ipynb_checkpoints",
+    "**/*.ipynb",
+    # NB all things in .gitignore are excluded by default of hatchling
+]
+
 
 # Project metadata (see https://peps.python.org/pep-0621)
 [project]
@@ -77,3 +98,22 @@ ignore = [
 docstring-code-format = true
 docstring-code-line-length = 89
 skip-magic-trailing-comma = false # default is false
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "ilastik-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+ilastik-tasks = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+pydantic = "==2.8.2"
+docstring_parser = "==0.15"
+ilastik-core = ">=1.4.2a1,<2"
+vigra = ">=1.12.1,<2"
