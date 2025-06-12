@@ -15,21 +15,34 @@
       },
       "args_schema_parallel": {
         "$defs": {
-          "ChannelInputModel": {
-            "description": "A channel which is specified by either `wavelength_id` or `label`.",
+          "IlastikChannel1InputModel": {
+            "description": "Channel input for ilastik.",
             "properties": {
               "wavelength_id": {
                 "title": "Wavelength Id",
-                "type": "string",
-                "description": "Unique ID for the channel wavelength, e.g. `A01_C01`. Can only be specified if label is not set."
+                "type": "string"
               },
               "label": {
                 "title": "Label",
-                "type": "string",
-                "description": "Name of the channel. Can only be specified if wavelength_id is not set."
+                "type": "string"
               }
             },
-            "title": "ChannelInputModel",
+            "title": "IlastikChannel1InputModel",
+            "type": "object"
+          },
+          "IlastikChannel2InputModel": {
+            "description": "Channel input for secondary ilastik channel.",
+            "properties": {
+              "wavelength_id": {
+                "title": "Wavelength Id",
+                "type": "string"
+              },
+              "label": {
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "title": "IlastikChannel2InputModel",
             "type": "object"
           }
         },
@@ -46,16 +59,12 @@
             "description": "Pyramid level of the image to be segmented. Choose `0` to process at full resolution."
           },
           "channel": {
-            "$ref": "#/$defs/ChannelInputModel",
+            "$ref": "#/$defs/IlastikChannel1InputModel",
             "title": "Channel",
             "description": "Primary channel for pixel classification; requires either `wavelength_id` (e.g. `A01_C01`) or `label` (e.g. `DAPI`)."
           },
           "channel2": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/ChannelInputModel"
-              }
-            ],
+            "$ref": "#/$defs/IlastikChannel2InputModel",
             "title": "Channel2",
             "description": "Second channel for pixel classification (in the same format as `channel`). Use only if second channel has also been used during Ilastik model training."
           },
@@ -85,6 +94,12 @@
             "title": "Ilastik Model",
             "type": "string",
             "description": "Path to the Ilastik model (e.g. `\"somemodel.ilp\"`)."
+          },
+          "relabeling": {
+            "default": true,
+            "title": "Relabeling",
+            "type": "boolean",
+            "description": "If `True`, apply relabeling so that label values are unique for all objects in the well."
           },
           "foreground_class": {
             "default": 0,
