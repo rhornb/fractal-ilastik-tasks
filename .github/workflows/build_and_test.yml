@@ -31,18 +31,9 @@ jobs:
         with:
           pixi-version: v0.44.0
 
-      - name: re-create manifest
-        run: pixi run -e dev python src/ilastik_tasks/dev/create_manifest.py
-
       - name: Check if manifest has changed
-        run: |
-          if [ -n "$(git diff --exit-code ./src/ilastik_tasks/__FRACTAL_MANIFEST__.json)" ]; then
-          echo "__FRACTAL_MANIFEST__.json has changed. Please run 'python src/ilastik_tasks/dev/create_manifest.py' and commit the changes."
-            exit 1
-          else
-            echo "__FRACTAL_MANIFEST__.json has not changed."
-          fi
-
+        run: pixi run fractal-manifest check --package ilastik-tasks
+        
       - name: Run tests
         run: pixi run -e dev pytest
   
