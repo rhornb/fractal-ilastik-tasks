@@ -8,6 +8,7 @@
         "Pixel Classifier"
       ],
       "docs_info": "### Purpose\n\nThis task is used to apply a ilastik pixel classifier to an image.\n\n### Outputs\n\n- The `ilastik_pixel_classification_segmentation`: Generates a new label image named `output_label_name`.\n\n### Limitations\n\n- The task can only be used with single and dual channels pixel classifiers models.",
+      "type": "parallel",
       "executable_parallel": "ilastik_pixel_classification_segmentation.py",
       "meta_parallel": {
         "cpus_per_task": 8,
