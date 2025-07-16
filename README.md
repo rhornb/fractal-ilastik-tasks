@@ -21,3 +21,5 @@ if you need to use the `dev` version of the package, you can run:
 ```bash
 pixi run -e dev python some_script.py
 ```
+
+.
