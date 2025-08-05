@@ -26,7 +26,7 @@ def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
     return dest_dir
 
 
-def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
+def test_ilastik_pixel_classification_segmentation_task_3D_dual_channel(test_data_dir_3d):
     """
     Test the 3D ilastik_pixel_classification_segmentation task with dual channel input.
     """
@@ -44,17 +44,51 @@ def test_ilastik_pixel_classification_segmentation_task_3D(test_data_dir_3d):
         output_label_name="test_label",
         relabeling=True,
     )
-
-    # Test failing of task if model was trained with two channels
-    # but only one is provided
+    
+    # Test failing of task if model was trained with one channel
+    # but two are provided
     with pytest.raises(ValueError):
         ilastik_pixel_classification_segmentation(
             zarr_url=zarr_url,
             level=4,
             channel=IlastikChannel1InputModel(label="DAPI_2"),
-            channel2=None,
+            channel2=IlastikChannel2InputModel(label=None),
             ilastik_model=str(ilastik_model),
-            output_label_name="test_label_single_channel",
+            output_label_name="test_label",
+            relabeling=True,
         )
+        
+def test_ilastik_pixel_classification_segmentation_task_3D_single_channel(test_data_dir_3d):
+    """
+    Test the 3D ilastik_pixel_classification_segmentation task with single channel input.
+    """
+    ilastik_model = (
+        Path(__file__).parent / "data/pixel_classifier_3D_single_channel.ilp"
+    ).as_posix()
+    zarr_url = f"{test_data_dir_3d}/B/03/0"
+
+    ilastik_pixel_classification_segmentation(
+        zarr_url=zarr_url,
+        level=4,
+        channel=IlastikChannel1InputModel(label="DAPI_2"),
+        channel2=IlastikChannel2InputModel(label=None),
+        ilastik_model=str(ilastik_model),
+        output_label_name="test_label",
+        relabeling=True,
+    )
+    
+    # Test failing of task if model was trained with one channel
+    # but two are provided
+    with pytest.raises(ValueError):
+        ilastik_pixel_classification_segmentation(
+            zarr_url=zarr_url,
+            level=4,
+            channel=IlastikChannel1InputModel(label="DAPI_2"),
+            channel2=IlastikChannel2InputModel(label="ECadherin_2"),
+            ilastik_model=str(ilastik_model),
+            output_label_name="test_label",
+            relabeling=True,
+        )
+
 
 
