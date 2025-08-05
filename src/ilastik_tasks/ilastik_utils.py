@@ -111,3 +111,20 @@ class IlastikChannel2InputModel(BaseModel):
                 f"Original error: {str(e)}"
             )
             return None
+
+
+def get_expected_number_of_channels(shell) -> int:
+    """
+    Get the expected number of channels from the trained ilastik model
+    """
+    opPixelClassification = shell.workflow.pcApplet.topLevelOperator
+    len_input_images = len(opPixelClassification.InputImages)
+    channel_number = []
+    for i in range(len_input_images):
+        channel = opPixelClassification.InputImages[i].meta.getTaggedShape()["c"]
+        channel_number.append(channel)
+    
+    if len(set(channel_number)) != 1:
+        raise ValueError("Inconsistent number of channels across input images.")
+    
+    return channel_number[0]
