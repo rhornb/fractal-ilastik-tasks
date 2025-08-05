@@ -3,15 +3,17 @@ from pathlib import Path
 
 import pytest
 from devtools import debug
+
+from ilastik_tasks.ilastik_pixel_classification_segmentation import (
+    ilastik_pixel_classification_segmentation,
+)
 from ilastik_tasks.ilastik_utils import (
     IlastikChannel1InputModel,
     IlastikChannel2InputModel,
 )
-from ilastik_tasks.ilastik_pixel_classification_segmentation import (
-    ilastik_pixel_classification_segmentation,
-)
 
 # TODO: add 2D testdata
+
 
 @pytest.fixture(scope="function")
 def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
@@ -26,7 +28,9 @@ def test_data_dir_3d(tmp_path: Path, zenodo_zarr_3d: list) -> str:
     return dest_dir
 
 
-def test_ilastik_pixel_classification_segmentation_task_3D_dual_channel(test_data_dir_3d):
+def test_ilastik_pixel_classification_segmentation_task_3D_dual_channel(
+    test_data_dir_3d,
+):
     """
     Test the 3D ilastik_pixel_classification_segmentation task with dual channel input.
     """
@@ -44,9 +48,9 @@ def test_ilastik_pixel_classification_segmentation_task_3D_dual_channel(test_dat
         output_label_name="test_label",
         relabeling=True,
     )
-    
-    # Test failing of task if model was trained with one channel
-    # but two are provided
+
+    # Test failing of task if model was trained with two channels
+    # but only one is provided
     with pytest.raises(ValueError):
         ilastik_pixel_classification_segmentation(
             zarr_url=zarr_url,
@@ -57,10 +61,14 @@ def test_ilastik_pixel_classification_segmentation_task_3D_dual_channel(test_dat
             output_label_name="test_label",
             relabeling=True,
         )
-        
-def test_ilastik_pixel_classification_segmentation_task_3D_single_channel(test_data_dir_3d):
+
+
+def test_ilastik_pixel_classification_segmentation_task_3D_single_channel(
+    test_data_dir_3d,
+):
     """
-    Test the 3D ilastik_pixel_classification_segmentation task with single channel input.
+    Test the 3D ilastik_pixel_classification_segmentation task
+    with single channel input.
     """
     ilastik_model = (
         Path(__file__).parent / "data/pixel_classifier_3D_single_channel.ilp"
@@ -76,7 +84,7 @@ def test_ilastik_pixel_classification_segmentation_task_3D_single_channel(test_d
         output_label_name="test_label",
         relabeling=True,
     )
-    
+
     # Test failing of task if model was trained with one channel
     # but two are provided
     with pytest.raises(ValueError):
@@ -89,6 +97,3 @@ def test_ilastik_pixel_classification_segmentation_task_3D_single_channel(test_d
             output_label_name="test_label",
             relabeling=True,
         )
-
-
-
