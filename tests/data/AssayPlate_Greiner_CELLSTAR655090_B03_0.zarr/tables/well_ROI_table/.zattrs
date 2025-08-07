@@ -1,6 +1,9 @@
 {
+    "backend": "anndata_v1",
     "encoding-type": "anndata",
     "encoding-version": "0.1.0",
     "fractal_table_version": "1",
+    "index_key": "FieldIndex",
+    "index_type": "str",
     "type": "roi_table"
 }
