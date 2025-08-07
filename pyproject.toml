@@ -52,6 +52,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
     "devtools",
+    "notebook",
     "pooch",
     "hatch",
     "pytest",
