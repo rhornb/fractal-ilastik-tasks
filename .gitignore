@@ -112,8 +112,10 @@ ENV/
 .idea/
 
 *.zarr
-# Test data loaded via pooch
-/tests/data/10_5281_zenodo_14883998
+# Add exeptions for specific zarr files
+!tests/data/AssayPlate_Greiner_CELLSTAR655090_B03_0.zarr
+!tests/data/test_mip_ome.zarr
+
 # pixi environments
 .pixi
 *.egg-info
