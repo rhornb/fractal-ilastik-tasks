@@ -131,6 +131,7 @@
           "zarr_url",
           "level",
           "channel",
+          "channel2",
           "ilastik_model"
         ],
         "type": "object",
