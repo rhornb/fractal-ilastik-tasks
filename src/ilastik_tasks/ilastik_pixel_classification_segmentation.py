@@ -51,7 +51,7 @@ from ilastik import app
 from ilastik.applets.dataSelection.opDataSelection import (
     PreloadedArrayDatasetInfo,
 )
-from pydantic import validate_call
+from pydantic import Field, validate_call
 from skimage.measure import label, regionprops
 from skimage.morphology import remove_small_holes
 
@@ -185,7 +185,9 @@ def ilastik_pixel_classification_segmentation(
     # Task-specific arguments
     level: int,
     channel: IlastikChannel1InputModel,
-    channel2: IlastikChannel2InputModel,
+    channel2: IlastikChannel2InputModel = Field(
+        default_factory=IlastikChannel2InputModel
+    ),
     input_ROI_table: str = "FOV_ROI_table",
     output_ROI_table: Optional[str] = None,
     output_label_name: Optional[str] = None,
