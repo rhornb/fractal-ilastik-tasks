@@ -20,7 +20,6 @@ def ome_zarr_3d_url(tmp_path: Path, testdata_path: Path) -> str:
     """
     Copy a test-data folder into a temporary folder.
     """
-    tmp_path = Path("/Users/ruthh/Pelkmans/Git/fractal-ilastik-tasks/tests/tmp")
     source_dir = testdata_path / "AssayPlate_Greiner_CELLSTAR655090_B03_0.zarr"
     dest_dir = (tmp_path / "ilastik_data_3d").as_posix()
     if Path(dest_dir).exists():
