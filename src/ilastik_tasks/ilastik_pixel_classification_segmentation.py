@@ -20,7 +20,6 @@ Ilastik adaptation by:
     Ruth Hornbachner <ruth.hornbachner@uzh.ch>
 """
 
-import json
 import logging
 import os
 from typing import Any, Optional
@@ -299,11 +298,21 @@ def ilastik_pixel_classification_segmentation(
             output_label_name = f"label_{ind_channel}"
 
     # Load ZYX data
-    data_zyx = da.from_zarr(f"{zarr_url}/{level}")[ind_channel]
+    # Workaround for #788: Only load channel index when there is a channel
+    # dimension
+    if ngff_image_meta.axes_names[0] != "c":
+        data_zyx = da.from_zarr(f"{zarr_url}/{level}")
+        if channel2.is_set():
+            raise ValueError(
+                "Dual channel input was specified for an OME-Zarr image "
+                "without a channel axis"
+            )
+    else:
+        data_zyx = da.from_zarr(f"{zarr_url}/{level}")[ind_channel]
+        if channel2.is_set():
+            data_zyx_c2 = da.from_zarr(f"{zarr_url}/{level}")[ind_channel_c2]
+            logger.info(f"Second channel: {data_zyx_c2.shape=}")
     logger.info(f"{data_zyx.shape=}")
-    if channel2.is_set():
-        data_zyx_c2 = da.from_zarr(f"{zarr_url}/{level}")[ind_channel_c2]
-        logger.info(f"Second channel: {data_zyx_c2.shape=}")
 
     # Read ROI table
     ROI_table_path = f"{zarr_url}/tables/{input_ROI_table}"
@@ -332,42 +341,27 @@ def ilastik_pixel_classification_segmentation(
     if not use_masks:
         overlap = find_overlaps_in_ROI_indices(list_indices)
         if overlap:
-            logger.warning(
+            raise ValueError(
                 f"ROI indices created from {input_ROI_table} table have "
                 "overlaps, but we are not using masked loading."
             )
 
-    # Load zattrs file
-    zattrs_file = f"{zarr_url}/.zattrs"
-    with open(zattrs_file) as jsonfile:
-        zattrs = json.load(jsonfile)
-
-    # Preliminary checks on multiscales
-    multiscales = zattrs["multiscales"]
-    if len(multiscales) > 1:
-        raise NotImplementedError(
-            f"Found {len(multiscales)} multiscales, "
-            "but only one is currently supported."
-        )
-    if "coordinateTransformations" in multiscales[0].keys():
-        raise NotImplementedError(
-            "global coordinateTransformations at the multiscales "
-            "level are not currently supported"
-        )
-
     # Rescale datasets (only relevant for level>0)
-    if not multiscales[0]["axes"][0]["name"] == "c":
-        raise ValueError(
-            "Cannot set `remove_channel_axis=True` for multiscale "
-            f'metadata with axes={multiscales[0]["axes"]}. '
-            'First axis should have name "c".'
+    # Workaround for #788
+    if ngff_image_meta.axes_names[0] != "c":
+        new_datasets = rescale_datasets(
+            datasets=[ds.model_dump() for ds in ngff_image_meta.datasets],
+            coarsening_xy=coarsening_xy,
+            reference_level=level,
+            remove_channel_axis=False,
         )
-    new_datasets = rescale_datasets(
-        datasets=multiscales[0]["datasets"],
-        coarsening_xy=coarsening_xy,
-        reference_level=level,
-        remove_channel_axis=True,
-    )
+    else:
+        new_datasets = rescale_datasets(
+            datasets=[ds.model_dump() for ds in ngff_image_meta.datasets],
+            coarsening_xy=coarsening_xy,
+            reference_level=level,
+            remove_channel_axis=True,
+        )
 
     label_attrs = {
         "image-label": {
@@ -379,7 +373,9 @@ def ilastik_pixel_classification_segmentation(
                 "name": output_label_name,
                 "version": __OME_NGFF_VERSION__,
                 "axes": [
-                    ax for ax in multiscales[0]["axes"] if ax["type"] != "channel"
+                    ax.dict()
+                    for ax in ngff_image_meta.multiscale.axes
+                    if ax.type != "channel"
                 ],
                 "datasets": new_datasets,
             }
@@ -426,6 +422,10 @@ def ilastik_pixel_classification_segmentation(
     logger.info(f"relabeling: {relabeling}")
     logger.info(f"{data_zyx.shape}")
     logger.info(f"{data_zyx.chunks}")
+    if channel2.is_set():
+        logger.info("Dual channel input for Ilastik model")
+        logger.info(f"{data_zyx_c2.shape}")
+        logger.info(f"{data_zyx_c2.chunks}")
 
     # Counters for relabeling
     num_labels_tot = {"num_labels_tot": 0}
