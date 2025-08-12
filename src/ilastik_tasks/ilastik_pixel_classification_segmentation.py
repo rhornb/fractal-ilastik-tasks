@@ -23,7 +23,7 @@ Ilastik adaptation by:
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, Union
 
 import anndata as ad
 import dask.array as da
@@ -83,7 +83,7 @@ def segment_ROI(
     foreground_class: int = 0,
     threshold: float = 0.5,
     min_size: int = 15,
-    label_dtype: np.dtype | None = None,
+    label_dtype: Union[np.dtype, None] = None,
     relabeling: bool = True,
 ) -> np.ndarray:
     """Run the Ilastik model on a single ROI.
