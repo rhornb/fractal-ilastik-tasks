@@ -189,8 +189,8 @@ def ilastik_pixel_classification_segmentation(
         default_factory=IlastikChannel2InputModel
     ),
     input_ROI_table: str = "FOV_ROI_table",
-    output_ROI_table: str | None = None,
-    output_label_name: str | None = None,
+    output_ROI_table: Union[str, None] = None,
+    output_label_name: Union[str, None] = None,
     use_masks: bool = True,
     # Ilastik-related arguments
     ilastik_model: str,
