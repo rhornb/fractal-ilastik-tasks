@@ -23,7 +23,7 @@ Ilastik adaptation by:
 import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, Union
 
 import anndata as ad
 import dask.array as da
@@ -31,11 +31,6 @@ import fractal_tasks_core
 import numpy as np
 import vigra
 import zarr
-from ilastik_tasks.ilastik_utils import (
-    IlastikChannel1InputModel,
-    IlastikChannel2InputModel,
-    get_expected_number_of_channels,
-)
 from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.masked_loading import masked_loading_wrapper
 from fractal_tasks_core.ngff import load_NgffImageMeta
@@ -56,9 +51,15 @@ from ilastik import app
 from ilastik.applets.dataSelection.opDataSelection import (
     PreloadedArrayDatasetInfo,
 )
-from pydantic import validate_call, Field
+from pydantic import Field, validate_call
 from skimage.measure import label, regionprops
 from skimage.morphology import remove_small_holes
+
+from ilastik_tasks.ilastik_utils import (
+    IlastikChannel1InputModel,
+    IlastikChannel2InputModel,
+    get_expected_number_of_channels,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ def segment_ROI(
     foreground_class: int = 0,
     threshold: float = 0.5,
     min_size: int = 15,
-    label_dtype: Optional[np.dtype] = None,
+    label_dtype: Union[np.dtype, None] = None,
     relabeling: bool = True,
 ) -> np.ndarray:
     """Run the Ilastik model on a single ROI.
@@ -130,9 +131,7 @@ def segment_ROI(
     ilastik_labels = ilastik_output > threshold
 
     # remove small holes
-    ilastik_labels = remove_small_holes(
-        ilastik_labels, area_threshold=min_size
-    )
+    ilastik_labels = remove_small_holes(ilastik_labels, area_threshold=min_size)
 
     # label image
     ilastik_labels = label(ilastik_labels)
@@ -148,12 +147,16 @@ def segment_ROI(
             or (label_props[i].axis_major_length < 1)
             or (label_props[i].major_axis_length < 1)
         ]
-        logger.info(f"number of labels before filtering for size = {ilastik_labels.max()}")
+        logger.info(
+            f"number of labels before filtering for size = {ilastik_labels.max()}"
+        )
         ilastik_labels[np.isin(ilastik_labels, labels2remove)] = 0
         ilastik_labels = label(ilastik_labels)
-        logger.info(f"number of labels after filtering for size = {ilastik_labels.max()}")
+        logger.info(
+            f"number of labels after filtering for size = {ilastik_labels.max()}"
+        )
         label_props = regionprops(ilastik_labels)
-        
+
     # Shift labels and update relabeling counters
     if relabeling:
         num_labels_roi = np.max(ilastik_labels)
@@ -186,8 +189,8 @@ def ilastik_pixel_classification_segmentation(
         default_factory=IlastikChannel2InputModel
     ),
     input_ROI_table: str = "FOV_ROI_table",
-    output_ROI_table: Optional[str] = None,
-    output_label_name: Optional[str] = None,
+    output_ROI_table: Union[str, None] = None,
+    output_label_name: Union[str, None] = None,
     use_masks: bool = True,
     # Ilastik-related arguments
     ilastik_model: str,
@@ -252,10 +255,10 @@ def ilastik_pixel_classification_segmentation(
 
     # Setup Ilastik headless shell
     shell = setup_ilastik(ilastik_model)
-    
+
     # Check if channel input fits expected number of channels of model
     expected_num_channels = get_expected_number_of_channels(shell)
-    
+
     if expected_num_channels == 2 and not channel2.is_set():
         raise ValueError(
             "Ilastik model expects two channels as "
@@ -265,7 +268,7 @@ def ilastik_pixel_classification_segmentation(
         raise ValueError(
             "Ilastik model expects 1 channel as " "input but two channels were provided"
         )
-        
+
     elif expected_num_channels > 2:
         raise NotImplementedError(
             f"Expected {expected_num_channels} channels, "
@@ -286,7 +289,7 @@ def ilastik_pixel_classification_segmentation(
             ind_channel_c2 = omero_channel_2.index
         else:
             return
-        
+
     # Set channel label
     if output_label_name is None:
         try:
@@ -516,6 +519,21 @@ def ilastik_pixel_classification_segmentation(
                     f"{len(overlap_list)} bounding-box pairs overlap"
                 )
 
+        # Check that the shape of the new label image matches the expected shape
+        expected_shape = (
+            e_z - s_z,
+            e_y - s_y,
+            e_x - s_x,
+        )
+        if new_label_img.shape != expected_shape:
+            try:
+                new_label_img = da.broadcast_to(new_label_img, expected_shape)
+            except:
+                raise ValueError(
+                    f"Shape mismatch: {new_label_img.shape} != {expected_shape} "
+                    "Between the segmented label image and expected shape in the zarr array."
+                )
+
         # Compute and store 0-th level to disk
         da.array(new_label_img).to_zarr(
             url=mask_zarr,
@@ -562,7 +580,6 @@ def ilastik_pixel_classification_segmentation(
             overwrite=overwrite,
             table_attrs=table_attrs,
         )
-
 
 
 if __name__ == "__main__":

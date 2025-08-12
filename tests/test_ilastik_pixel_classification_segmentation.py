@@ -126,7 +126,7 @@ def test_ilastik_pixel_classification_segmentation_task_2D_single_channel(
     ilastik_pixel_classification_segmentation(
         zarr_url=ome_zarr_2d_url,
         level=1,
-        channel=IlastikChannel1InputModel(label="DAPI_2"),
+        channel=IlastikChannel1InputModel(label="DAPI"),
         channel2=IlastikChannel2InputModel(label=None),
         ilastik_model=str(ilastik_model),
         output_label_name="test_label",
@@ -139,8 +139,8 @@ def test_ilastik_pixel_classification_segmentation_task_2D_single_channel(
         ilastik_pixel_classification_segmentation(
             zarr_url=ome_zarr_2d_url,
             level=1,
-            channel=IlastikChannel1InputModel(label="DAPI_2"),
-            channel2=IlastikChannel2InputModel(label="ECadherin_2"),
+            channel=IlastikChannel1InputModel(label="DAPI"),
+            channel2=IlastikChannel2InputModel(label="ECadherin"),
             ilastik_model=str(ilastik_model),
             output_label_name="test_label",
             relabeling=True,
