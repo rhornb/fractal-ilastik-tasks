@@ -23,7 +23,7 @@ Ilastik adaptation by:
 import json
 import logging
 import os
-from typing import Any, Union
+from typing import Any, Optional
 
 import anndata as ad
 import dask.array as da
@@ -83,7 +83,7 @@ def segment_ROI(
     foreground_class: int = 0,
     threshold: float = 0.5,
     min_size: int = 15,
-    label_dtype: Union[np.dtype, None] = None,
+    label_dtype: Optional[np.dtype] = None,
     relabeling: bool = True,
 ) -> np.ndarray:
     """Run the Ilastik model on a single ROI.
@@ -189,8 +189,8 @@ def ilastik_pixel_classification_segmentation(
         default_factory=IlastikChannel2InputModel
     ),
     input_ROI_table: str = "FOV_ROI_table",
-    output_ROI_table: Union[str, None] = None,
-    output_label_name: Union[str, None] = None,
+    output_ROI_table: Optional[str] = None,
+    output_label_name: Optional[str] = None,
     use_masks: bool = True,
     # Ilastik-related arguments
     ilastik_model: str,
@@ -503,6 +503,10 @@ def ilastik_pixel_classification_segmentation(
             preprocessing_kwargs=preprocessing_kwargs,
         )
 
+        # Make 3D in case of 2D data
+        if len(new_label_img.shape) == 2:
+            new_label_img = np.expand_dims(new_label_img, axis=0)
+
         if output_ROI_table:
             bbox_df = array_to_bounding_box_table(
                 new_label_img,
@@ -525,14 +529,16 @@ def ilastik_pixel_classification_segmentation(
             e_y - s_y,
             e_x - s_x,
         )
+        logger.info(f"Expected shape: {expected_shape}")
         if new_label_img.shape != expected_shape:
             try:
                 new_label_img = da.broadcast_to(new_label_img, expected_shape)
-            except:
+            except Exception as err:
                 raise ValueError(
                     f"Shape mismatch: {new_label_img.shape} != {expected_shape} "
-                    "Between the segmented label image and expected shape in the zarr array."
-                )
+                    "Between the segmented label image and expected shape in "
+                    "the zarr array."
+                ) from err
 
         # Compute and store 0-th level to disk
         da.array(new_label_img).to_zarr(
